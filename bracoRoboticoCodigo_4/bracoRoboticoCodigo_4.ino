@@ -22,8 +22,8 @@ Servo servoCotovelo;
 
 #define PIN_SERVO_BASE1     22
 #define PIN_SERVO_BASE2     5
-#define PIN_SERVO_OMBRO     23
-#define PIN_SERVO_COTOVELO  26
+#define PIN_SERVO_OMBRO     26
+#define PIN_SERVO_COTOVELO  23
 
 // Comprimento dos elos do braço em mm
 const float braco = 100.0;     // L1 (Ombro ao Cotovelo)
@@ -31,7 +31,7 @@ const float antibraco = 100.0; // L2 (Cotovelo ao Pulso)
 
 // Posições atuais dos servos (em graus)
 int posBase1 = 0, posBase2 = 0;
-int posOmbro = 0, posCotovelo = 0;
+int posOmbro = 30, posCotovelo = 30;
 
 // Declaração das funções
 void calculateAndMove(float x, float y, float z);
@@ -127,15 +127,17 @@ void calculateAndMove(float x, float y, float z) {
   Serial.print(" Angulo Cotovelo="); Serial.println(anguloCotovelo);
 
   // Envia os comandos de movimento para os servos
-  int anguloOmbroCompensado = constrain(round(anguloOmbro), 0, 180);
-  //int anguloCotoveloCompensado = constrain(round(anguloCotovelo), 0, 180);
+  const int OMBRO_OFFSET = 180; // Exemplo, ajuste empiricamente
+  const int COTOVELO_OFFSET = 45;
+  int anguloOmbroCompensado = constrain(round(OMBRO_OFFSET - anguloOmbro), 0, 180);
+  int anguloCotoveloCompensado = constrain(round(anguloCotovelo - COTOVELO_OFFSET), 0, 180);
 
-  moveServosSmooth(anguloBase1, anguloBase2, anguloOmbroCompensado, anguloCotovelo);
+  moveServosSmooth(anguloBase1, anguloBase2, anguloOmbroCompensado, anguloCotoveloCompensado);
 }
 
 void moveServosSmooth(int base1, int base2, int ombro, int cotovelo) {
   unsigned long startTime = millis();
-  const int stepDelay = 150; // Delay entre cada passo do servo (em ms)
+  const int stepDelay = 100; // Delay entre cada passo do servo (em ms)
 
   // Continua o loop enquanto a posição atual de qualquer servo for diferente da posição alvo
   while (posBase1 != base1 || posBase2 != base2 || posOmbro != ombro || posCotovelo != cotovelo) {
@@ -155,7 +157,7 @@ void moveServosSmooth(int base1, int base2, int ombro, int cotovelo) {
       }
       if (posOmbro != ombro) {
         posOmbro += (posOmbro < ombro) ? 1 : -1;
-        servoOmbro.write(round(180.0 - posOmbro));
+        servoOmbro.write(posOmbro);
       }
       if (posCotovelo != cotovelo) {
         posCotovelo += (posCotovelo < cotovelo) ? 1 : -1;
@@ -174,6 +176,6 @@ void moveServosSmooth(int base1, int base2, int ombro, int cotovelo) {
 void resetServos() {
   Serial.println("Resetando servos para posição inicial...");
   // Move os servos para uma posição de repouso segura
-  moveServosSmooth(0, 0, 0, 0);
+  moveServosSmooth(30, 30, 30, 30);
   delay(500); // Pequena pausa após o reset
 }
